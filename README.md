@@ -12,11 +12,11 @@ git clone https://github.com/akaannak/docker_lab
 ```
 3. Перейдите в папку репоитория
 ```cmd
-cd ./docker_lab
+cd ./docker_lab/taski/backend
 ```
 4. Соберите образ в командной строке с помощью следующего скрипта (замените название на желаемое имя) 
 ```cmd
-docker build -t *название*
+docker build -t *название* .
 ```
 5. Запустите docker контейнер (укажите нужный порт, например 8080)
 ```
