@@ -12,7 +12,7 @@ git clone https://github.com/akaannak/docker_lab
 ```
 3. Перейдите в папку репоитория
 ```cmd
-cd ./docker_lab/taski/backend
+cd ./docker_lab/taski
 ```
 4. Соберите образ в командной строке с помощью следующего скрипта (замените название на желаемое имя) 
 ```cmd
