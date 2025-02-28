@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker Image CI   
 
 on:
   push:
@@ -6,13 +6,18 @@ on:
   pull_request:
     branches: [ "main" ]
 
+
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
       run: docker build -t tasks2 ./taski/.
+  update:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Update to Docker Hub
+      run: docker image push akaannak/tasks2
+    
