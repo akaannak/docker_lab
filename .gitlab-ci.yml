@@ -1,0 +1,72 @@
+stages:
+    - build
+    - test
+    - deploy
+
+fetch_dependencies_job:
+    stage: build
+    image: python:3.8-slim
+    script:
+        - cd ./taski
+        - py ./backend/main.py
+    allow_failure: true
+    rules:
+    - when: on_success
+    
+build_job:
+    stage: build
+    image: ghcr.io/userver-framework/ubuntu-22.04-userver-pg:latest
+    needs: 
+        - fetch_dependencies_job
+    script: 
+        - cd ./backend
+        - ./tests/run_as_user.sh cmake -B build_release -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        - ./tests/run_as_user.sh cmake --build build_release -j $(nproc) --target gideon_unittest
+        - ./tests/run_as_user.sh cmake --build build_release -j $(nproc) --target gideon_benchmark
+        - ./tests/run_as_user.sh cmake --build build_release -j $(nproc) --target gideon
+    artifacts: 
+        paths:
+            - "./backend/build_release/"
+    rules:
+    - when: on_success
+            
+test_job:
+    stage: test
+    image: ghcr.io/userver-framework/ubuntu-22.04-userver-pg:latest
+    needs:
+        - build_job
+    script:
+        - cd ./backend/build_release
+        - ./../tests/run_as_user.sh GTEST_COLOR=1 PYTEST_ADDOPTS="--color=yes" ctest -V
+        - pycodestyle ../tests
+    artifacts:
+        paths:
+            - ./backend/build_release/test-results/gideon_unittest.xml
+            - ./backend/build_release/Testing/Temporary/LastTest.log
+    rules:
+    - when: on_success
+
+deploy_job:
+    stage: deploy
+    script:
+        - apt update
+        - apt install openssh-client -y
+        - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+        # Run ssh-agent (inside the build environment)
+        - eval $(ssh-agent -s)
+        # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
+        # - ssh-add <(echo "$BACKEND_SSH_KEY")
+        - mkdir -p ~/.ssh
+        - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+        # - mkdir .ssh/
+        - echo "$BACKEND_SSH_KEY" > ~/.ssh/key
+        # - chmod 700 .ssh
+        - chmod 400 ~/.ssh/key
+        - cd backend
+        - find .
+        - scp -i ~/.ssh/key -r . $BACKEND_PRODUCTION_HOST:/home/ubuntu/backend
+        # Setup server
+        - ssh -i ~/.ssh/key $BACKEND_PRODUCTION_HOST sudo ./start.sh
+    only: 
+        - backend_production
+
