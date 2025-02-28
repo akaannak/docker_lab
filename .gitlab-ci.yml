@@ -2,25 +2,14 @@ stages:
     - build
     - test
     - deploy
-
-fetch_dependencies_job:
-    stage: build
-    image: python:3.8-slim
-    script:
-        - cd ./taski/backend
-        - python manage.py
-    allow_failure: true
-    rules:
-    - when: on_success
     
 build_job:
     stage: build
     image: python:3.8-slim
     needs: 
-        - fetch_dependencies_job
-    script: 
-        - cd ./taski/backend
-        - python manage.py
+    script:
+        - sudo docker build -t playground -f dockerfile ./taski/backend 
+        - sudo docker run -p 8080:80 playground
     artifacts: 
         paths:
             - "./backend/build_release/"
