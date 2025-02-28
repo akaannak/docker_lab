@@ -16,6 +16,8 @@ jobs:
       run: docker build -t tasks2 ./taski/.
   update:
     runs-on: ubuntu-latest
+    needs: 
+      - build
     steps:
     - uses: actions/checkout@v4
     - name: Update to Docker Hub
