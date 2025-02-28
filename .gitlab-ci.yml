@@ -8,8 +8,8 @@ build_job:
     image: python:3.8-slim
     needs: 
     script:
-        - sudo docker build -t playground -f dockerfile ./taski/backend 
-        - sudo docker run -p 8080:80 playground
+        - cd ./taski/backend
+        - python manage.py
     artifacts: 
         paths:
             - "./backend/build_release/"
